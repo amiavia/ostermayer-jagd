@@ -1,13 +1,85 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth, useUser } from '@clerk/clerk-expo';
+import { useMutation, useQuery } from 'convex/react';
+import { router } from 'expo-router';
+import { api } from '../../convex/_generated/api';
 import { Header, Card } from '../../src/components';
 import { colors } from '../../src/lib/constants';
 import { useApp } from '../../src/context/AppContext';
 import { clearAllData } from '../../src/lib/storage';
 
 export default function SettingsScreen() {
-  const { settings, updateSettings } = useApp();
+  const { settings, updateSettings, profiles } = useApp();
+  const { isSignedIn, signOut } = useAuth();
+  const { user } = useUser();
+  const [syncing, setSyncing] = useState(false);
+
+  // Convex
+  const cloudProfiles = useQuery(api.rifleProfiles.list) ?? [];
+  const createCloudProfile = useMutation(api.rifleProfiles.create);
+
+  const handleSignIn = () => {
+    router.push('/auth/sign-in');
+  };
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Abmelden',
+      'Mochten Sie sich wirklich abmelden?',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Abmelden',
+          onPress: async () => {
+            await signOut();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleSyncToCloud = async () => {
+    if (!isSignedIn) {
+      Alert.alert('Nicht angemeldet', 'Bitte melden Sie sich an, um Profile zu synchronisieren.');
+      return;
+    }
+
+    if (profiles.length === 0) {
+      Alert.alert('Keine Profile', 'Es gibt keine lokalen Profile zum Synchronisieren.');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      let synced = 0;
+      for (const profile of profiles) {
+        // Check if profile already exists in cloud (by name)
+        const exists = cloudProfiles.some(cp => cp.name === profile.name);
+        if (!exists) {
+          await createCloudProfile({
+            name: profile.name,
+            caliber: profile.caliber,
+            ammunition: profile.ammunition,
+            bulletWeight: profile.bulletWeight,
+            muzzleVelocity: profile.muzzleVelocity,
+            ballisticCoefficient: profile.ballisticCoefficient,
+            zeroDistance: profile.zeroDistance,
+            zeroMethod: profile.zeroType,
+            scopeHeight: profile.sightHeight,
+          });
+          synced++;
+        }
+      }
+      Alert.alert('Erfolg', `${synced} Profile wurden in die Cloud synchronisiert.`);
+    } catch (error) {
+      console.error('Sync error:', error);
+      Alert.alert('Fehler', 'Profile konnten nicht synchronisiert werden.');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const unitOptions = [
     { value: 'cm', label: 'Zentimeter (cm)' },
@@ -54,6 +126,56 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
+        {/* Cloud Sync Section */}
+        <Text style={styles.sectionTitle}>Cloud & Konto</Text>
+        <Card style={styles.settingsCard}>
+          {isSignedIn ? (
+            <>
+              <View style={styles.accountRow}>
+                <View style={styles.accountInfo}>
+                  <Text style={styles.accountEmail}>{user?.primaryEmailAddress?.emailAddress}</Text>
+                  <Text style={styles.accountStatus}>Angemeldet</Text>
+                </View>
+                <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+                  <Text style={styles.signOutText}>Abmelden</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.syncRow}>
+                <View style={styles.syncInfo}>
+                  <Text style={styles.syncLabel}>Cloud-Profile</Text>
+                  <Text style={styles.syncCount}>{cloudProfiles.length} Profile in der Cloud</Text>
+                </View>
+              </View>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.syncButton}
+                onPress={handleSyncToCloud}
+                disabled={syncing}
+              >
+                {syncing ? (
+                  <ActivityIndicator size="small" color={colors.forestDark} />
+                ) : (
+                  <>
+                    <Text style={styles.syncButtonText}>Lokale Profile synchronisieren</Text>
+                    <Text style={styles.syncButtonCount}>{profiles.length} lokal</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={styles.signInRow} onPress={handleSignIn}>
+              <View style={styles.signInInfo}>
+                <Text style={styles.signInLabel}>Anmelden</Text>
+                <Text style={styles.signInDescription}>
+                  Profile uber Gerate synchronisieren
+                </Text>
+              </View>
+              <Text style={styles.signInArrow}>→</Text>
+            </TouchableOpacity>
+          )}
+        </Card>
+
         {/* Unit Selection */}
         <Text style={styles.sectionTitle}>Einheiten</Text>
         <Card style={styles.settingsCard}>
@@ -91,7 +213,7 @@ export default function SettingsScreen() {
           <View style={styles.divider} />
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Ballistik-Modell</Text>
-            <Text style={styles.infoValue}>G1 Drag Model</Text>
+            <Text style={styles.infoValue}>G1 / G7</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.infoRow}>
@@ -106,10 +228,10 @@ export default function SettingsScreen() {
           <View style={styles.dataSourceSection}>
             <Text style={styles.dataSourceTitle}>Ballistisches Berechnungsmodell</Text>
             <Text style={styles.dataSourceText}>
-              Diese App verwendet das G1 Standard-Widerstandsmodell mit numerischer Integration (Punkt-Masse-Trajektorienberechnung). Die Berechnung berucksichtigt:
+              Diese App verwendet G1- und G7-Widerstandsmodelle mit numerischer Integration (Punkt-Masse-Trajektorienberechnung). Das G7-Modell ist besser fur moderne Boat-Tail-Geschosse geeignet. Die Berechnung berucksichtigt:
             </Text>
             <Text style={styles.dataSourceBullet}>• Schwerkraft (9.81 m/s²)</Text>
-            <Text style={styles.dataSourceBullet}>• Luftwiderstand nach G1-Modell</Text>
+            <Text style={styles.dataSourceBullet}>• Luftwiderstand nach G1- oder G7-Modell</Text>
             <Text style={styles.dataSourceBullet}>• Luftdichte (Temperatur, Druck)</Text>
             <Text style={styles.dataSourceBullet}>• Windabdrift (Querwind)</Text>
             <Text style={styles.dataSourceBullet}>• Zielfernrohrhohe uber Lauf</Text>
@@ -161,10 +283,10 @@ export default function SettingsScreen() {
             </View>
 
             <View style={styles.metricItem}>
-              <Text style={styles.metricName}>G1 Widerstandsberechnung</Text>
+              <Text style={styles.metricName}>G1/G7 Widerstandsberechnung</Text>
               <Text style={styles.metricFormula}>a = K × (ρ/ρ₀) × (Cd/BC) × v²</Text>
               <Text style={styles.metricDescription}>
-                Abbremsung durch Luftwiderstand. K = 0.000871 (G1-Konstante), ρ = aktuelle Luftdichte, ρ₀ = 1.225 kg/m³ (Standardatmosphare), Cd = G1-Widerstandsbeiwert (Mach-abhangig aus JBM-Tabelle), BC = ballistischer Koeffizient.
+                Abbremsung durch Luftwiderstand. K = 0.000871, ρ = aktuelle Luftdichte, ρ₀ = 1.225 kg/m³ (Standardatmosphare), Cd = Widerstandsbeiwert des gewahlten Modells (G1 oder G7, Mach-abhangig aus JBM-Tabelle), BC = ballistischer Koeffizient.
               </Text>
             </View>
           </View>
@@ -474,5 +596,94 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 16,
     marginTop: 4,
+  },
+  // Cloud sync styles
+  accountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  accountInfo: {
+    flex: 1,
+  },
+  accountEmail: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  accountStatus: {
+    fontSize: 12,
+    color: colors.success,
+    marginTop: 2,
+  },
+  signOutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: colors.cream,
+    borderRadius: 6,
+  },
+  signOutText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  syncRow: {
+    padding: 16,
+  },
+  syncInfo: {
+    flex: 1,
+  },
+  syncLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  syncCount: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  syncButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.gold,
+    margin: 16,
+    marginTop: 8,
+    padding: 14,
+    borderRadius: 10,
+  },
+  syncButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.forestDark,
+  },
+  syncButtonCount: {
+    fontSize: 13,
+    color: colors.forestDark,
+    opacity: 0.7,
+  },
+  signInRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  signInInfo: {
+    flex: 1,
+  },
+  signInLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.forest,
+  },
+  signInDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  signInArrow: {
+    fontSize: 20,
+    color: colors.forest,
   },
 });

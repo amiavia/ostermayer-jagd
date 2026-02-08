@@ -1,3 +1,5 @@
+import { DragModel } from '../types';
+
 // Ostermayer Jagd AG Brand Colors
 export const colors = {
   forestDark: '#0D1F0D',
@@ -28,11 +30,12 @@ export const DEFAULT_SETTINGS = {
   language: 'de' as const,
 };
 
-// Standard atmospheric conditions
+// Standard atmospheric conditions (ICAO Standard Atmosphere)
 export const STANDARD_ATMOSPHERE = {
   temperature: 15, // Celsius
   pressure: 1013.25, // hPa
-  humidity: 0.5, // 50%
+  humidity: 0.5, // 50% (0-1 scale)
+  altitude: 0, // meters above sea level
 };
 
 // Slider ranges
@@ -43,12 +46,23 @@ export const SLIDER_RANGES = {
   sightHeight: { min: 2, max: 10, step: 0.5 },
 };
 
+// Environment slider ranges
+export const ENVIRONMENT_RANGES = {
+  temperature: { min: -20, max: 45, step: 1, unit: '°C' },
+  pressure: { min: 850, max: 1100, step: 1, unit: 'hPa' },
+  altitude: { min: 0, max: 4000, step: 50, unit: 'm' },
+  humidity: { min: 0, max: 100, step: 5, unit: '%' },
+};
+
 // Zero distance options
 export const ZERO_OPTIONS = [
   { distance: 100, type: 'standard' as const, label: '100m Standard', description: 'Nullpunkt genau bei 100 Metern' },
   { distance: 100, type: 'gee' as const, label: 'GEE (100m +4cm)', description: 'Gunstigste Einschussentfernung - 4cm hoch bei 100m', recommended: true },
   { distance: 200, type: 'standard' as const, label: '200m Standard', description: 'Nullpunkt genau bei 200 Metern' },
 ];
+
+// Default drag model for ballistic calculations
+export const DEFAULT_DRAG_MODEL: DragModel = 'g1';
 
 // Default onboarding values
 export const DEFAULT_ONBOARDING = {

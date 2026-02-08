@@ -10,8 +10,11 @@ try {
   console.warn('expo-clipboard not available');
 }
 
-// Standard distances for range card export
-const RANGE_DISTANCES = [50, 100, 150, 200, 250, 300];
+// Full range card distances in 25m increments (0-500m)
+const RANGE_DISTANCES = [
+  0, 25, 50, 75, 100, 125, 150, 175, 200, 225,
+  250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500
+];
 
 interface ExportOptions {
   profile: RifleProfile;
@@ -45,12 +48,19 @@ export function generateRangeCardText(options: ExportOptions): string {
   lines.push('');
 
   // Profile info
+  const dragModel = profile.dragModel || 'g1';
+  const dragLabel = dragModel.toUpperCase();
+  const activeBc = dragModel === 'g7' && profile.ammunition.bcG7 != null
+    ? profile.ammunition.bcG7
+    : profile.ammunition.ballisticCoefficient;
+
   lines.push(`Profil: ${profile.name}`);
   lines.push(`Kaliber: ${profile.caliber}`);
   lines.push(`Munition: ${profile.ammunition.name}`);
   lines.push(`Geschossgewicht: ${profile.ammunition.bulletWeight} gr`);
   lines.push(`V0: ${profile.ammunition.muzzleVelocity} m/s`);
-  lines.push(`BC (G1): ${profile.ammunition.ballisticCoefficient}`);
+  lines.push(`Widerstandsmodell: ${dragLabel}`);
+  lines.push(`BC (${dragLabel}): ${activeBc}`);
   lines.push(`Zero: ${profile.zeroDistance}m ${profile.zeroType === 'gee' ? '(GEE +4cm)' : ''}`);
   lines.push(`ZF-Hohe: ${profile.sightHeight} cm`);
   lines.push('');

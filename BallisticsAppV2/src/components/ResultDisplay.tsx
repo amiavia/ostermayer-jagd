@@ -47,6 +47,11 @@ export function ResultDisplay({ result, distance, unit }: ResultDisplayProps) {
           <Text style={styles.itemLabel}>Energie</Text>
           <Text style={styles.itemValue}>{result.energy} J</Text>
         </View>
+
+        <View style={styles.resultItem}>
+          <Text style={styles.itemLabel}>Mach @ Ziel</Text>
+          <Text style={styles.itemValue}>{result.machAtTarget}</Text>
+        </View>
       </View>
     </View>
   );

@@ -11,7 +11,7 @@ import { CaliberGroup } from '../types';
  * - Environmental conditions (temperature, altitude, humidity)
  * - Individual rifle characteristics
  *
- * Last verified: January 2025
+ * Last verified: February 2026
  */
 export const CALIBER_DATABASE: CaliberGroup[] = [
   {
@@ -39,8 +39,15 @@ export const CALIBER_DATABASE: CaliberGroup[] = [
         // Ref: hornady.com/ammunition/rifle/308-win-178-gr-eld-x-precision-hunter
         name: '.308 Win 178gr ELD-X',
         bulletWeight: 178,
-        ballisticCoefficient: 0.535, // G1, Hornady official
-        muzzleVelocity: 790, // 2600 fps, 24" barrel
+        ballisticCoefficient: 0.552, // G1, Hornady updated 2024 (was 0.535)
+        bcG7: 0.278,
+        dragModel: 'g7',
+        bcBands: [
+          { velocityThreshold: 765, bc: 0.552 },
+          { velocityThreshold: 681, bc: 0.543 },
+          { velocityThreshold: 0, bc: 0.538 },
+        ],
+        muzzleVelocity: 792, // 2600 fps, 24" barrel
       },
     ],
   },
@@ -65,11 +72,22 @@ export const CALIBER_DATABASE: CaliberGroup[] = [
         muzzleVelocity: 850, // 2790 fps, 24" barrel
       },
       {
+        // Source: Federal Fusion F3006FS3
+        // Ref: federalpremium.com/rifle/fusion
+        name: '.30-06 180gr Fusion',
+        bulletWeight: 180,
+        ballisticCoefficient: 0.498, // G1, Federal official
+        bcG7: 0.240, // estimated — flat-base, G1 preferred
+        dragModel: 'g1',
+        muzzleVelocity: 810, // 2660 fps, 24" barrel
+      },
+      {
         // Source: Hornady American Whitetail
         // Ref: hornady.com/ammunition/rifle/30-06-spfld-180-gr-interlock-sp-american-whitetail
         name: '.30-06 180gr InterLock SP',
         bulletWeight: 180,
         ballisticCoefficient: 0.452, // G1, Hornady official
+        dragModel: 'g1', // flat-base bullet, G1 appropriate
         muzzleVelocity: 810, // 2660 fps, 24" barrel
       },
     ],
@@ -93,6 +111,21 @@ export const CALIBER_DATABASE: CaliberGroup[] = [
         bulletWeight: 140,
         ballisticCoefficient: 0.646, // G1, Hornady official
         muzzleVelocity: 826, // 2710 fps, 24" barrel
+      },
+      {
+        // Source: Hornady Precision Hunter
+        // Ref: hornady.com/ammunition/rifle/6-5-creedmoor-143-gr-eld-x-precision-hunter
+        name: '6.5 CM 143gr ELD-X',
+        bulletWeight: 143,
+        ballisticCoefficient: 0.623, // G1, Hornady official
+        bcG7: 0.314,
+        dragModel: 'g7',
+        bcBands: [
+          { velocityThreshold: 765, bc: 0.623 },
+          { velocityThreshold: 681, bc: 0.604 },
+          { velocityThreshold: 0, bc: 0.584 },
+        ],
+        muzzleVelocity: 823, // 2700 fps, 24" barrel
       },
     ],
   },
@@ -158,7 +191,8 @@ export const CALIBER_DATABASE: CaliberGroup[] = [
         // Ref: norma-ammunition.com/en-gb/products/dedicated-hunting/centerfire-rifle/norma-oryx/norma-oryx-93-x-62-285gr---20193132
         name: '9.3x62 285gr Oryx',
         bulletWeight: 285,
-        ballisticCoefficient: 0.328, // G1, Norma official
+        ballisticCoefficient: 0.405, // G1, updated
+        dragModel: 'g1', // bonded soft-point, G1 appropriate
         muzzleVelocity: 730, // 2395 fps, Norma official
       },
     ],
@@ -199,12 +233,67 @@ export const CALIBER_DATABASE: CaliberGroup[] = [
         muzzleVelocity: 770, // 2526 fps, Norma official
       },
       {
+        // Source: RWS ID Classic
+        // Ref: rws-ammunition.com
+        name: '8x57 IS 196gr RWS ID Classic',
+        bulletWeight: 196,
+        ballisticCoefficient: 0.390, // G1, RWS official
+        dragModel: 'g1', // traditional design
+        muzzleVelocity: 770, // Approx. RWS spec
+      },
+      {
         // Source: Hornady Vintage Match
         // Ref: hornady.com/ammunition/rifle/8x57-js-196gr-bthp-vintage-match
         name: '8x57 IS 196gr BTHP Match',
         bulletWeight: 196,
         ballisticCoefficient: 0.525, // G1, Hornady official
         muzzleVelocity: 780, // 2560 fps, Hornady official
+      },
+    ],
+  },
+  {
+    caliber: '.300 Winchester Magnum',
+    description: 'Langstrecken Prazision',
+    ammunition: [
+      {
+        // Source: Hornady Precision Hunter
+        // Ref: hornady.com/ammunition/rifle/300-win-mag-200-gr-eld-x-precision-hunter
+        name: '.300 WM 200gr ELD-X',
+        bulletWeight: 200,
+        ballisticCoefficient: 0.597, // G1, Hornady official
+        bcG7: 0.301,
+        dragModel: 'g7',
+        bcBands: [
+          { velocityThreshold: 765, bc: 0.597 },
+          { velocityThreshold: 681, bc: 0.588 },
+          { velocityThreshold: 0, bc: 0.578 },
+        ],
+        muzzleVelocity: 872, // 2860 fps, 24" barrel
+      },
+      {
+        // Source: Nosler AccuBond
+        // Ref: nosler.com/accubond
+        name: '.300 WM 180gr AccuBond',
+        bulletWeight: 180,
+        ballisticCoefficient: 0.507, // G1, Nosler official
+        bcG7: 0.246,
+        dragModel: 'g7',
+        muzzleVelocity: 899, // 2950 fps, 24" barrel (Nosler Trophy Grade)
+      },
+    ],
+  },
+  {
+    caliber: '6.5x55 Swedish',
+    description: 'Skandinavischer Klassiker',
+    ammunition: [
+      {
+        // Source: Norma Oryx
+        // Ref: norma-ammunition.com
+        name: '6.5x55 SE 156gr Oryx',
+        bulletWeight: 156,
+        ballisticCoefficient: 0.410, // G1, Norma official
+        dragModel: 'g1',
+        muzzleVelocity: 780, // ~2559 fps, Norma official
       },
     ],
   },

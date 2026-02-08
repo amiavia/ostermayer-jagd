@@ -146,12 +146,14 @@ export default function CaliberScreen() {
                               </Text>
                             </View>
                             <View style={styles.specItem}>
-                              <Text style={styles.specLabel}>BC</Text>
+                              <Text style={styles.specLabel}>BC ({(ammo.dragModel || 'g1').toUpperCase()})</Text>
                               <Text style={[
                                 styles.specValue,
                                 isAmmoSelected && styles.specValueSelected
                               ]}>
-                                {ammo.ballisticCoefficient}
+                                {(ammo.dragModel || 'g1') === 'g7' && ammo.bcG7 != null
+                                  ? ammo.bcG7
+                                  : ammo.ballisticCoefficient}
                               </Text>
                             </View>
                           </View>

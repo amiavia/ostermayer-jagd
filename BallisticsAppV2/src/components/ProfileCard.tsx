@@ -44,8 +44,12 @@ export function ProfileCard({ profile, isActive, onSelect, onEdit, onDelete }: P
           <Text style={styles.specValue}>{profile.ammunition.muzzleVelocity} m/s</Text>
         </View>
         <View style={styles.specItem}>
-          <Text style={styles.specLabel}>BC</Text>
-          <Text style={styles.specValue}>{profile.ammunition.ballisticCoefficient}</Text>
+          <Text style={styles.specLabel}>BC ({(profile.dragModel || 'g1').toUpperCase()})</Text>
+          <Text style={styles.specValue}>
+            {(profile.dragModel || 'g1') === 'g7' && profile.ammunition.bcG7 != null
+              ? profile.ammunition.bcG7
+              : profile.ammunition.ballisticCoefficient}
+          </Text>
         </View>
       </View>
 

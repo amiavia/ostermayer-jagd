@@ -114,6 +114,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const addProfile = useCallback(async (profileData: Omit<RifleProfile, 'id' | 'createdAt'>): Promise<RifleProfile> => {
     const newProfile: RifleProfile = {
       ...profileData,
+      dragModel: profileData.dragModel || profileData.ammunition.dragModel || 'g1',
       id: generateProfileId(),
       createdAt: Date.now(),
     };

@@ -36,6 +36,7 @@ export default function SummaryScreen() {
         zeroDistance: onboardingState.zeroDistance,
         zeroType: onboardingState.zeroType,
         sightHeight: onboardingState.sightHeight,
+        dragModel: onboardingState.ammunition.dragModel || 'g1',
       });
 
       await completeOnboarding();
@@ -105,8 +106,19 @@ export default function SummaryScreen() {
           <View style={styles.divider} />
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>BC (G1)</Text>
-            <Text style={styles.summaryValue}>{onboardingState.ammunition?.ballisticCoefficient}</Text>
+            <Text style={styles.summaryLabel}>Widerstandsmodell</Text>
+            <Text style={styles.summaryValue}>{(onboardingState.ammunition?.dragModel || 'g1').toUpperCase()}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>BC ({(onboardingState.ammunition?.dragModel || 'g1').toUpperCase()})</Text>
+            <Text style={styles.summaryValue}>
+              {(onboardingState.ammunition?.dragModel || 'g1') === 'g7' && onboardingState.ammunition?.bcG7 != null
+                ? onboardingState.ammunition.bcG7
+                : onboardingState.ammunition?.ballisticCoefficient}
+            </Text>
           </View>
         </Card>
 
